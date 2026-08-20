@@ -27,10 +27,17 @@ type SessionAverage = {
   messageCount: number
 }
 
+type TurnAccumulator = {
+  tokens: number
+  startAt: number
+}
+
 type TrackerState = {
   streamSamplesBySession: Record<string, StreamSample[]>
   messageTimingByID: Record<string, MessageTiming>
   sessionAverageByID: Record<string, SessionAverage>
+  sessionLastTurnTpsByID: Record<string, number>
+  turnBySession: Record<string, TurnAccumulator>
 }
 
 type TrackerListener = () => void
@@ -105,6 +112,11 @@ function SessionPromptRight(props: {
     return formatRate(totals.totalTokens / (totals.totalDurationMs / 1000))
   }
 
+  function sessionLastTps() {
+    const last = props.tracker.sessionLastTurnTpsByID[props.sessionID]
+    return formatRate(last)
+  }
+
   function sessionTtft() {
     const totals = props.tracker.sessionAverageByID[props.sessionID]
     if (!totals || totals.messageCount <= 0 || totals.totalTtftMs < 0) return undefined
@@ -129,9 +141,10 @@ function SessionPromptRight(props: {
 
   function statusText() {
     const live = liveTps() ?? "-"
+    const last = sessionLastTps() ?? "-"
     const avg = sessionAverage() ?? "-"
     const ttft = sessionTtft() ?? "-"
-    return `TPS ${live} | AVG ${avg} | TTFT ${ttft}`
+    return `TPS ${live} | LAST ${last} | AVG ${avg} | TTFT ${ttft}`
   }
 }
 
@@ -140,6 +153,8 @@ const tui: TuiPlugin = async (api) => {
     streamSamplesBySession: {},
     messageTimingByID: {},
     sessionAverageByID: {},
+    sessionLastTurnTpsByID: {},
+    turnBySession: {},
   }
   const listeners = new Set<TrackerListener>()
 
@@ -239,6 +254,20 @@ const tui: TuiPlugin = async (api) => {
           totalDurationMs: totals.totalDurationMs + durationMs,
           totalTtftMs: totals.totalTtftMs + ttftMs,
           messageCount: totals.messageCount + 1,
+        }
+
+        if (evt.properties.info.finish === "tool-calls") {
+          const currentTurn = tracker.turnBySession[sessionID]
+          tracker.turnBySession[sessionID] = currentTurn
+            ? { tokens: currentTurn.tokens + totalTokens, startAt: currentTurn.startAt }
+            : { tokens: totalTokens, startAt: timing.firstResponseAt }
+        } else {
+          const turn = tracker.turnBySession[sessionID]
+          const turnStartAt = turn?.startAt ?? timing.firstResponseAt
+          const turnTokens = totalTokens + (turn?.tokens ?? 0)
+          const turnDurationMs = Math.max(evt.properties.info.time.completed - turnStartAt, 1)
+          tracker.sessionLastTurnTpsByID[sessionID] = turnTokens / (turnDurationMs / 1000)
+          delete tracker.turnBySession[sessionID]
         }
       }
     }
