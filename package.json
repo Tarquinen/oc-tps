@@ -1,34 +1,55 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "oc-tps",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "repository": {
     "type": "git",
     "url": "https://github.com/Tarquinen/oc-tps"
   },
   "type": "module",
   "exports": {
-    "./tui": "./tui.tsx"
+    "./tui": "./dist/tui.js"
   },
   "scripts": {
+    "build": "node build.tui.mjs",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@opencode/plugin": "2.0.10"
-  },
   "peerDependencies": {
+    "@opencode/plugin": ">=2.0.10",
     "@opentui/core": ">=0.5.10",
     "@opentui/solid": ">=0.5.10",
     "solid-js": ">=1.9.0"
   },
+  "peerDependenciesMeta": {
+    "@opencode/plugin": {
+      "optional": true
+    },
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/preset-typescript": "^7.29.7",
+    "@opencode/plugin": "2.0.10",
     "@opencode/theme": "2.0.10",
+    "@opentui/core": "^0.5.12",
+    "@opentui/solid": "^0.5.12",
     "@types/node": "^24.0.0",
+    "babel-preset-solid": "^1.9.12",
+    "solid-js": "^1.9.12",
     "typescript": "^5.9.0"
   },
   "files": [
     "assets/",
     "README.md",
+    "dist/",
     "tui.tsx"
   ]
 }
