@@ -8,10 +8,13 @@
   },
   "type": "module",
   "exports": {
-    "./tui": "./tui.tsx"
+    "./tui": "./dist/tui.js"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "build": "bun scripts/build.ts",
+    "prepack": "bun run build",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --conditions=browser --preload @opentui/solid/preload"
   },
   "dependencies": {
     "@opencode/plugin": "2.0.10"
@@ -23,12 +26,13 @@
   },
   "devDependencies": {
     "@opencode/theme": "2.0.10",
+    "@types/bun": "^1.3.14",
     "@types/node": "^24.0.0",
     "typescript": "^5.9.0"
   },
   "files": [
     "assets/",
     "README.md",
-    "tui.tsx"
+    "dist/"
   ]
 }

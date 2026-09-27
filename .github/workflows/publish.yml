@@ -45,6 +45,20 @@ jobs:
             echo "${NAME}@${VERSION} is not published yet."
           fi
 
+      - name: Setup Bun
+        if: steps.package.outputs.published == 'false'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        if: steps.package.outputs.published == 'false'
+        run: npm ci
+
+      - name: Verify plugin
+        if: steps.package.outputs.published == 'false'
+        run: |
+          bun run typecheck
+          bun run test
+
       - name: Publish
         if: steps.package.outputs.published == 'false'
         run: npx --yes --package npm@11 npm publish --access public --provenance
